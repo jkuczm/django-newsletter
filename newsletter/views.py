@@ -30,6 +30,7 @@ from .forms import (
     SubscribeRequestForm, UserUpdateForm, UpdateRequestForm,
     UnsubscribeRequestForm, UpdateForm
 )
+from .settings import CONFIRM_EMAIL_ACTION
 
 
 class NewsletterViewBase(object):
@@ -281,18 +282,41 @@ class UnsubscribeUserView(ActionUserView):
         return super(UnsubscribeUserView, self).get(request, *args, **kwargs)
 
 
+def update_subscription(subscription, action):
+    """
+    Change subscription according to given action:
+    subscribe/unsubscribe/update/,
+    then save the changes.
+    """
+    # TODO: this should be Subscription model method
+
+    # If a new subscription or update, make sure it is subscribed
+    # Else, unsubscribe
+    if action == 'subscribe' or action == 'update':
+        subscription.subscribed = True
+    else:
+        subscription.unsubscribed = True
+
+    logger.debug(
+        _(u'Updated subscription %(subscription)s through the web.'),
+        {'subscription': subscription}
+    )
+    subscription.save()
+
+
 class ActionRequestView(NewsletterMixin, FormView):
     """ Base class for subscribe, unsubscribe and update request views. """
     newsletter_queryset = Newsletter.on_site.all()
     action = None
 
     def get_context_data(self, **kwargs):
-        """ Add error and action to context. """
+        """ Add error action and action_done to context. """
         context = super(ActionRequestView, self).get_context_data(**kwargs)
 
         context.update({
             'error': self.error,
-            'action': self.action
+            'action': self.action,
+            'action_done': self.action_done
         })
 
         return context
@@ -304,19 +328,27 @@ class ActionRequestView(NewsletterMixin, FormView):
     def form_valid(self, form):
         subscription = self.get_subscription(form)
 
-        try:
-            subscription.send_activation_email(action=self.action)
+        if CONFIRM_EMAIL_ACTION[self.action]:
+            try:
+                subscription.send_activation_email(action=self.action)
 
-        except Exception, e:
-            logger.exception('Error %s while submitting email to %s.',
-                e, subscription.email)
-            self.error = True
+            except Exception, e:
+                logger.exception('Error %s while submitting email to %s.',
+                    e, subscription.email)
+                self.error = True
+        else:
+            # Confirmation email for this action was switched off in settings,
+            # so subscribe/unsubscribe/update straight away.
+            update_subscription(subscription, self.action)
+            # action_done will be passed to template.
+            self.action_done = True
 
         return self.render_to_response(self.get_context_data(form=form))
 
     def dispatch(self, *args, **kwargs):
         self.newsletter = self.get_newsletter(**kwargs)
         self.error = None
+        self.action_done = False
 
         return super(ActionRequestView, self).dispatch(*args, **kwargs)
 
@@ -405,18 +437,7 @@ class UpdateSubscriptionViev(NewsletterMixin, FormView):
         # Get our instance, but do not save yet
         subscription = form.save(commit=False)
 
-        # If a new subscription or update, make sure it is subscribed
-        # Else, unsubscribe
-        if self.action == 'subscribe' or self.action == 'update':
-            subscription.subscribed = True
-        else:
-            subscription.unsubscribed = True
-
-        logger.debug(
-            _(u'Updated subscription %(subscription)s through the web.'),
-            {'subscription': subscription}
-        )
-        subscription.save()
+        update_subscription(subscription, self.action)
 
         return self.render_to_response(self.get_context_data(form=form))
 
