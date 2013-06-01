@@ -23,28 +23,29 @@ if NEWSLETTER_RICHTEXT_WIDGET:
             )
         )
 
-# Global confirm email setting
-# can be overridden by settings for specific actions
-CONFIRM_EMAIL = getattr(
-    django_settings, "NEWSLETTER_CONFIRM_EMAIL", True
-)
 
-# Process confirm email settings for specific actions
-# if not set global setting is used.
-CONFIRM_EMAIL_ACTION = {
+def get_confirm_email_action():
+    """ Return confirm email settings for specific actions. """
+    confirm_email = getattr(
+        django_settings, "NEWSLETTER_CONFIRM_EMAIL", True
+    )
+
+    return {
     'subscribe': getattr(
         django_settings,
         "NEWSLETTER_CONFIRM_EMAIL_SUBSCRIBE",
-        CONFIRM_EMAIL
+        confirm_email
     ),
     'unsubscribe': getattr(
         django_settings,
         "NEWSLETTER_CONFIRM_EMAIL_UNSUBSCRIBE",
-        CONFIRM_EMAIL
+        confirm_email
     ),
     'update': getattr(
         django_settings,
         "NEWSLETTER_CONFIRM_EMAIL_UPDATE",
-        CONFIRM_EMAIL
+        confirm_email
     ),
 }
+
+CONFIRM_EMAIL_ACTION = get_confirm_email_action()
