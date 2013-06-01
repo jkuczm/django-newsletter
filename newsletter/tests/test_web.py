@@ -520,6 +520,7 @@ class AnonymousSubscribeTestCase(WebSubscribeTestCase,
         self.assertInContext(response, 'newsletter', Newsletter, self.n)
         self.assertInContext(response, 'form', SubscribeRequestForm)
         self.assertFalse(response.context['error'])
+        self.assertFalse(response.context['action_done'])
 
         subscription = getattr(response.context['form'], 'instance', None)
         self.assert_(subscription)
@@ -555,6 +556,7 @@ class AnonymousSubscribeTestCase(WebSubscribeTestCase,
                 )
 
         self.assertTrue(response.context['error'])
+        self.assertFalse(response.context['action_done'])
 
     def test_retry_subscribe(self):
         """
@@ -752,6 +754,7 @@ class AnonymousSubscribeTestCase(WebSubscribeTestCase,
         self.assertInContext(response, 'newsletter', Newsletter, self.n)
         self.assertInContext(response, 'form', UpdateRequestForm)
         self.assertFalse(response.context['error'])
+        self.assertFalse(response.context['action_done'])
 
         self.assertEqual(subscription, response.context['form'].instance)
 
@@ -785,6 +788,7 @@ class AnonymousSubscribeTestCase(WebSubscribeTestCase,
                 )
 
         self.assertTrue(response.context['error'])
+        self.assertFalse(response.context['action_done'])
 
     def test_unsubscribe_request_view(self):
         """ Test the unsubscribe request form. """
@@ -860,6 +864,7 @@ class AnonymousSubscribeTestCase(WebSubscribeTestCase,
         self.assertInContext(response, 'newsletter', Newsletter, self.n)
         self.assertInContext(response, 'form', UpdateRequestForm)
         self.assertFalse(response.context['error'])
+        self.assertFalse(response.context['action_done'])
 
         self.assertEqual(subscription, response.context['form'].instance)
 
@@ -893,6 +898,7 @@ class AnonymousSubscribeTestCase(WebSubscribeTestCase,
                 )
 
         self.assertTrue(response.context['error'])
+        self.assertFalse(response.context['action_done'])
 
     def test_unsubscribe_update_unactivated(self):
         """ Test updating unsubscribed subscriptions view. """
