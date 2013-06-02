@@ -74,21 +74,32 @@ Installation
 	    ...
 	)
 
-#)  Configure email confirmation of subscribe, unsubscribe and update subscription action (optional).
+#)  Configure confirmation of subscribe, unsubscribe and update subscription actions (optional).
 
-    By default subscribe, unsubscribe and update request made by user that is not logged in
-    need to be confirmed by clicking on activation link in email sent to that user.
+    By default, user that is not logged in, to subscribe, unsubscribe or update subscription 
+    need to confirm requests by clicking on activation link in email sent to that user
+    and then by submitting activation form.
 
-    If you want requested actions to be performed without email confirmation
-    add following line to settings.py::
+    If you want requested actions to be performed immediately after clicking on activation link
+    without without the need to submit activation form add following line to settings.py::
+
+	NEWSLETTER_CONFIRM_FORM = False
+
+    If you want requested actions to be performed without any email confirmation at all
+    add following line instead::
 
 	NEWSLETTER_CONFIRM_EMAIL = False
 
-    For more granular control ``NEWSLETTER_CONFIRM_EMAIL`` setting can be overridden
-    for each of subscribe, unsubscribe and update actions by adding::
-    ``NEWSLETTER_CONFIRM_EMAIL_SUBSCRIBE`` and/or
-    ``NEWSLETTER_CONFIRM_EMAIL_UNSUBSCRIBE`` and/or
-    ``NEWSLETTER_CONFIRM_EMAIL_UPDATE`` set to ``True`` or ``False``.
+    For more granular control ``NEWSLETTER_CONFIRM_FORM`` setting can be overridden
+    for each of subscribe, unsubscribe and update actions by adding
+    ``NEWSLETTER_CONFIRM_FORM_SUBSCRIBE`` and/or
+    ``NEWSLETTER_CONFIRM_FORM_UNSUBSCRIBE`` and/or
+    ``NEWSLETTER_CONFIRM_FORM_UPDATE`` set to ``True`` or ``False``.
+
+    Similarly ``NEWSLETTER_CONFIRM_EMAIL`` setting can be overridden by
+    ``NEWSLETTER_CONFIRM_EMAIL_SUBSCRIBE``,
+    ``NEWSLETTER_CONFIRM_EMAIL_UNSUBSCRIBE``,
+    ``NEWSLETTER_CONFIRM_EMAIL_UPDATE``.
 
 #)  Install and configure your preferred rich text widget (optional).
 
