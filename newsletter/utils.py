@@ -28,3 +28,6 @@ def make_activation_code():
 def get_default_sites():
     """ Get a list of id's for all sites; the default for newsletters. """
     return [site.id for site in Site.objects.all()]
+
+# Possible actions that user can perform
+ACTIONS = ('subscribe', 'unsubscribe', 'update')
