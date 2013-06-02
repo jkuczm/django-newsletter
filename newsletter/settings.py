@@ -2,6 +2,7 @@ from django.conf import settings as django_settings
 from django.utils.importlib import import_module
 from django.core.exceptions import ImproperlyConfigured
 
+from .utils import ACTIONS
 
 # Import and set the richtext field
 NEWSLETTER_RICHTEXT_WIDGET = \
@@ -24,28 +25,30 @@ if NEWSLETTER_RICHTEXT_WIDGET:
         )
 
 
-def get_confirm_email_action():
-    """ Return confirm email settings for specific actions. """
-    confirm_email = getattr(
-        django_settings, "NEWSLETTER_CONFIRM_EMAIL", True
+def get_confirm_configuration(feature):
+    """
+    Return configuration of confirmation email or form
+    for specific actions.
+    """
+    assert feature in ('EMAIL', 'FORM')
+
+    global_setting_name = 'NEWSLETTER_CONFIRM_%s' % feature
+
+    global_setting = getattr(
+        django_settings, global_setting_name, True
     )
 
-    return {
-    'subscribe': getattr(
-        django_settings,
-        "NEWSLETTER_CONFIRM_EMAIL_SUBSCRIBE",
-        confirm_email
-    ),
-    'unsubscribe': getattr(
-        django_settings,
-        "NEWSLETTER_CONFIRM_EMAIL_UNSUBSCRIBE",
-        confirm_email
-    ),
-    'update': getattr(
-        django_settings,
-        "NEWSLETTER_CONFIRM_EMAIL_UPDATE",
-        confirm_email
-    ),
-}
+    configuration = {}
 
-CONFIRM_EMAIL_ACTION = get_confirm_email_action()
+    for action in ACTIONS:
+        configuration[action] = getattr(
+            django_settings,
+            "%s_%s" % (global_setting_name, action.upper()),
+            global_setting
+        )
+
+    return configuration
+
+CONFIRM_EMAIL_ACTION = get_confirm_configuration('EMAIL')
+
+CONFIRM_FORM_ACTION = get_confirm_configuration('FORM')
