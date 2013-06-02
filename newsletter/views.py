@@ -23,14 +23,14 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext, ugettext_lazy as _
 
-from django.forms.models import modelformset_factory
+from django.forms.models import modelformset_factory, model_to_dict
 
 from .models import Newsletter, Subscription, Submission
 from .forms import (
     SubscribeRequestForm, UserUpdateForm, UpdateRequestForm,
     UnsubscribeRequestForm, UpdateForm
 )
-from .settings import CONFIRM_EMAIL_ACTION
+from .settings import CONFIRM_EMAIL_ACTION, CONFIRM_FORM_ACTION
 from .utils import ACTIONS
 
 
@@ -415,13 +415,19 @@ class UpdateSubscriptionViev(NewsletterMixin, FormView):
             return {'user_activation_code': self.activation_code}
         else:
             # TODO: Test coverage of this branch
-            return None
+            return {}
 
     def get_form_kwargs(self):
         """ Add instance to form kwargs. """
         kwargs = super(UpdateSubscriptionViev, self).get_form_kwargs()
 
         kwargs['instance'] = self.subscription
+
+        if not CONFIRM_FORM_ACTION[self.action]:
+            # Confirmation form for this action was switched off in settings,
+            # so treat initial data as submitted data.
+            kwargs['data'] = model_to_dict(self.subscription)
+            kwargs['data'].update(self.get_initial())
 
         return kwargs
 
@@ -443,22 +449,13 @@ class UpdateSubscriptionViev(NewsletterMixin, FormView):
         return self.render_to_response(self.get_context_data(form=form))
 
     def get(self, request, *args, **kwargs):
-        form_class = self.get_form_class()
-        form = self.get_form(form_class)
 
-        # TODO: Figure out what the hell this code is doing here.
+        if not CONFIRM_FORM_ACTION[self.action]:
+            # Confirmation form for this action was switched off in settings,
+            # so treat this get request like post request with submitted form.
+            return self.post(request, *args, **kwargs)
 
-        # If we are activating and activation code is valid and not already
-        # subscribed, activate straight away
-
-        # if action == 'subscribe' and form.is_valid() and not my_subscription.subscribed:
-        #     subscription = form.save(commit=False)
-        #     subscription.subscribed = True
-        #     subscription.save()
-        #
-        #     logger.debug(_(u'Activated subscription %(subscription)s through the web.') % {'subscription':subscription})
-
-        return self.render_to_response(self.get_context_data(form=form))
+        return super(UpdateSubscriptionViev, self).get(request, *args, **kwargs)
 
     def dispatch(self, *args, **kwargs):
         assert 'action' in kwargs
