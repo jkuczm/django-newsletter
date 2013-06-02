@@ -735,6 +735,7 @@ class AnonymousSubscribeTestCase(WebSubscribeTestCase,
                 status_code=200
             )
 
+    @override_settings(NEWSLETTER_CONFIRM_FORM_SUBSCRIBE=True)
     def test_subscribe_request_activate(self):
         """ Test subscription activation. """
 
@@ -881,6 +882,7 @@ class AnonymousSubscribeTestCase(WebSubscribeTestCase,
 
         self.assertEqual(response.context['newsletter'], self.n)
 
+    @override_settings(NEWSLETTER_CONFIRM_FORM_UNSUBSCRIBE=True)
     def test_unsubscribe_request_activate(self):
         """ Update a request. """
 
@@ -1052,6 +1054,7 @@ class AnonymousSubscribeTestCase(WebSubscribeTestCase,
                 response, "This e-mail address has not been subscribed to."
             )
 
+    @override_settings(NEWSLETTER_CONFIRM_FORM_UPDATE=True)
     def test_update_request_activate(self):
         """ Update a request. """
 
