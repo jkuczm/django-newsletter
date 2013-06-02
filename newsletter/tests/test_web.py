@@ -772,6 +772,36 @@ class AnonymousSubscribeTestCase(WebSubscribeTestCase,
         dt = (subscription.subscribe_date - subscription.create_date).seconds
         self.assertBetween(dt, WAIT_TIME, WAIT_TIME + 1)
 
+    @override_settings(NEWSLETTER_CONFIRM_FORM_SUBSCRIBE=False)
+    def test_subscribe_request_activate_form_off(self):
+        """
+        Test subscription activation
+        with confirmation form switched off in settings.
+        """
+
+        subscription = Subscription(newsletter=self.n,
+                                    name='Test Name',
+                                    email='test@email.com')
+        subscription.save()
+
+        time.sleep(WAIT_TIME)
+
+        self.assertFalse(subscription.subscribed)
+
+        activate_url = subscription.subscribe_activate_url()
+        self.assert_(activate_url)
+
+        response = self.client.get(activate_url)
+        self.assertInContext(response, 'form', UpdateForm)
+
+        subscription = getattr(response.context['form'], 'instance', None)
+        self.assert_(subscription)
+        self.assert_(subscription.subscribed)
+        self.assertFalse(subscription.unsubscribed)
+
+        dt = (subscription.subscribe_date - subscription.create_date).seconds
+        self.assertBetween(dt, WAIT_TIME, WAIT_TIME + 1)
+
     @override_settings(NEWSLETTER_CONFIRM_EMAIL_UNSUBSCRIBE=True)
     def test_unsubscribe_request_post(self):
         """ Post the unsubscribe request form. """
@@ -911,6 +941,35 @@ class AnonymousSubscribeTestCase(WebSubscribeTestCase,
         self.assert_(subscription.unsubscribed)
         self.assertEqual(subscription.name, testname2)
         self.assertEqual(subscription.email, testemail2)
+
+        dt = (now() - subscription.unsubscribe_date).seconds
+        self.assertLessThan(dt, 2)
+
+    @override_settings(NEWSLETTER_CONFIRM_FORM_UNSUBSCRIBE=False)
+    def test_unsubscribe_request_activate_form_off(self):
+        """
+        Test unsubscribe activation
+        with confirmation form switched off in settings.
+        """
+
+        testname = 'Test Name'
+        testemail = 'test@email.com'
+
+        subscription = Subscription(newsletter=self.n,
+                                    name=testname,
+                                    email=testemail)
+        subscription.save()
+
+        activate_url = subscription.unsubscribe_activate_url()
+
+        response = self.client.get(activate_url)
+        self.assertInContext(response, 'form', UpdateForm)
+
+        subscription = getattr(response.context['form'], 'instance', None)
+        self.assert_(subscription)
+        self.assert_(subscription.unsubscribed)
+        self.assertEqual(subscription.name, testname)
+        self.assertEqual(subscription.email, testemail)
 
         dt = (now() - subscription.unsubscribe_date).seconds
         self.assertLessThan(dt, 2)
@@ -1083,6 +1142,32 @@ class AnonymousSubscribeTestCase(WebSubscribeTestCase,
         self.assert_(subscription.subscribed)
         self.assertEqual(subscription.name, testname2)
         self.assertEqual(subscription.email, testemail2)
+
+    @override_settings(NEWSLETTER_CONFIRM_FORM_UPDATE=False)
+    def test_update_request_activate_form_off(self):
+        """
+        Test update activation
+        with confirmation form switched off in settings.
+        """
+
+        testname = 'Test Name2'
+        testemail = 'test2@email.com'
+
+        subscription = Subscription(newsletter=self.n,
+                                    name=testname,
+                                    email=testemail)
+        subscription.save()
+
+        activate_url = subscription.update_activate_url()
+
+        response = self.client.get(activate_url)
+        self.assertInContext(response, 'form', UpdateForm)
+
+        subscription = getattr(response.context['form'], 'instance', None)
+        self.assert_(subscription)
+        self.assert_(subscription.subscribed)
+        self.assertEqual(subscription.name, testname)
+        self.assertEqual(subscription.email, testemail)
 
     def test_update_request_activate_form(self):
         """
